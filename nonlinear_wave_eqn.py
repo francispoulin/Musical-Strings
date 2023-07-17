@@ -15,15 +15,18 @@
 #  2) after starting python3, use
 #  >>> import nonlinear_wave_eqn
 
-# soln contains the solution in the following order: uL, vL, uN, vN
-# u = displacement; v = velocity
+# soln contains the solution in the following order: uL, vL, wL, sL, uN, vN, wN, sN
+# u = transverse displacement; v = transverse velocity
+# w = longitudinal displacement; s = longitudinal velocity
 # L = linear; N = nonlinear
 
 # all the fields are defined on the cell edges x
 
 # Zero Dirichlet boundary conditions are imposed on all fields
 # u(0, t) = 0 = u(L, t)
+# w(0, t) = 0 = w(L, t)
 # v(0, t) = 0 = v(L, t)
+# s(0, t) = 0 = s(L, t)
 
 # 230609 TODO LIST:
     # add dispersion into the eqn (kappa value) [DONE i think]
@@ -50,14 +53,15 @@ movie = True                                   # switch to make an animation
 movie_name = 'wave_eqn_movie.mp4'
 
 ### Input parameters
-L  = 10                                       # length of domain                
-N  = 200                                      # number of grid points
+L  = 0.631                                       # length of domain                
+N  = 90                                      # number of grid points
 dx = L/N                                      # grid spacing
-c2 = 0.0                                      # wave speed (squared)
+c2_t = 330                                    # transverse wave speed (squared)
+c2_l = 350                                    # longitudinal wave speed (squared)
 k  = 1.0                                      # dispersion parameter
 
-t0, tf  = 0, 10                               # initial time, final time
-dt, ts  = 0.01, 0.05                          # time steps soln and output
+t0, tf  = 0, 1                               # initial time, final time
+dt, ts  = 0.00001, 0.00005                          # time steps soln and output
 tp      = dt*10                               # time step for plotting
 
 ### Compute Parameters
@@ -68,7 +72,7 @@ nsv = int(ts/dt)                               # mumber of time steps to save
 ### Store parameters in a class then output some info
 parms = parameters(N = N, L = L, dx = dx, \
                    dt = dt, tf = tf, ts = ts, Nt = Nt, npt = npt, nsv = nsv, skip = 5, \
-                   c2 = c2, k = k, method = flux_wave_eqn)
+                   c2_t = c2_t, c2_l = c2_l, k = k, method = flux_wave_eqn)
 output_info(parms)
 
 ### Initial Conditions with plot: u1, h1, u3, h3
@@ -76,15 +80,15 @@ x    = np.linspace(-L/2, L/2, N+1)          # define grids (staggered grid)
 # ICs: initial velocity
 #soln = np.vstack([0*x, np.exp(-(x**2)/(L/20)**2), \
 #                  0*x, np.exp(-(x**2)/(L/20)**2)])
-soln = np.vstack([np.exp(-(x**2)/(L/20)**2), 0*x, \
-                  np.exp(-(x**2)/(L/20)**2), 0*x])
+soln = np.vstack([0*x, 0.7*np.exp(-(x**2)/(L/20)**2), 0*x, 0.7*np.exp(-(x**2)/(L/20)**2), \
+                  0*x, 0.7*np.exp(-(x**2)/(L/20)**2), 0*x, 0.7*np.exp(-(x**2)/(L/20)**2),])
 
 ### Store data to plot later
-soln_save = np.zeros((4, N+1, round(tf/ts) + 1))
+soln_save = np.zeros((8, N+1, round(tf/ts) + 1))
 soln_save[:,:,0] = soln
 
 ### Start plotting snapshots
-fig, axs = plt.subplots(2, sharex=True)      
+fig, axs = plt.subplots(2, 2, sharex=True)      
 plot_soln(x, soln, parms, fig, axs, movie, 0)
 
 ### Calculate the solution

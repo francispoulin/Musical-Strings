@@ -8,7 +8,7 @@ import subprocess                      # needed for movie
 import sys
 
 class parameters:
-    def __init__(self, N, L, dx, dt, tf, ts, Nt, npt, nsv, skip, c2, k, method):
+    def __init__(self, N, L, dx, dt, tf, ts, Nt, npt, nsv, skip, c2_t, c2_l, k, method):
         self.N  = N
         self.L  = L
         self.dx = dx
@@ -19,7 +19,8 @@ class parameters:
         self.npt = npt
         self.nsv = nsv
         self.skip = skip
-        self.c2 = c2
+        self.c2_t = c2_t
+        self.c2_l = c2_l
         self.k = k
         self.method = method
 
@@ -30,7 +31,7 @@ def merge_to_mp4(frame_filenames, movie_name, fps=12):
     cmd = ['ffmpeg', '-framerate', str(fps), '-i', frame_filenames, '-y', 
             '-q', '1', '-threads', '0', '-pix_fmt', 'yuv420p', movie_name]
     subprocess.call(cmd, stdout=f_log, stderr=f_err)
-    # remove the frame PNGs TODO maybe this is too specific?
+    # remove the frame PNGs
     for f in glob.glob("frame_*.png"):
         os.remove(f)
     f_log.close()
@@ -41,24 +42,28 @@ def dfdx(f,dx):                         # A difference function (positive direct
   
 def flux_wave_eqn(soln, parms):
     dx = parms.dx           
-    c2 = parms.c2
+    c2_t = parms.c2_t
+    c2_l = parms.c2_l
     k = parms.k
     N = parms.N
 
     dudx_L = dfdx(soln[0, :], dx)
-    dudx_N = dfdx(soln[2, :], dx)
-    flux_wave_diffusion_L = k * dudx_L + c2 * dudx_L
-    flux_wave_diffusion_N = k * dudx_N + c2 * dudx_N / np.sqrt(1 + dudx_N**2)
+    dwdx_L = dfdx(soln[2, :], dx)
+    dudx_N = dfdx(soln[4, :], dx)
+    dwdx_N = dfdx(soln[6, :], dx)
+    dRdx_N = np.sqrt(np.square((1+dwdx_N)) + np.square((dudx_N)))
 
     flux_vL = np.zeros(N+1)
+    flux_sL = np.zeros(N+1)
     flux_vN = np.zeros(N+1)
-    #flux_vL[1:-1] = - k * soln[1, 1:-1] + c2 * dfdx(dudx_L, dx)
-    #flux_vN[1:-1] = - k * soln[3, 1:-1] + c2 * dfdx(sintheta, dx)
-    #flux_vL[1:-1] = - k * dfdx(dudx_L, dx) + c2 * dfdx(dudx_L, dx)
-    flux_vL[1:-1] = dfdx(flux_wave_diffusion_L, dx) 
-    flux_vN[1:-1] = dfdx(flux_wave_diffusion_N, dx) 
+    flux_sN = np.zeros(N+1)
 
-    flux = np.vstack([soln[1, :], flux_vL, soln[3, :], flux_vN])
+    flux_vL[1:-1] = c2_t * dfdx(dudx_L, dx) 
+    flux_sL[1:-1] = c2_l * dfdx(dwdx_L, dx) 
+    flux_vN[1:-1] = c2_l * dfdx(dudx_N, dx) - (c2_l - c2_t) * dfdx(np.divide(dudx_N, dRdx_N), dx)
+    flux_sN[1:-1] = c2_l * dfdx(dwdx_N, dx) - (c2_l - c2_t) * dfdx(np.divide((1+dwdx_N), dRdx_N), dx)
+
+    flux = np.vstack([soln[1, :], flux_vL, soln[3, :], flux_sL, soln[5, :], flux_vN, soln[7, :], flux_sN])
               
     return flux
 
@@ -67,26 +72,47 @@ def plot_soln(x, soln, parms, fig, axs, movie, ii):
     N  = parms.N
     sk = parms.skip
 
-    axs[0].cla()
-    axs[1].cla()
+    axs[0, 0].cla()
+    axs[0, 1].cla()
+    axs[1, 0].cla()
+    axs[1, 1].cla()
 
     t = ii*parms.dt
     fig.suptitle('Displacements in 1D Elastic Rod at t = %7.5f' % t)
 
-    axs[0].plot(x, soln[0, :], '-b', linewidth=3, label="linear")  # linear u
-    axs[0].plot(x, soln[2, :], '--r', linewidth=3, label="nonlinear")  # nonlinear u
-    axs[0].set_xlim([-L/2, L/2])
-    axs[0].set_title("Displacements")
-    axs[0].grid(True);
-    axs[0].set_ylim([-1, 1])
-    axs[0].legend(loc="best")
+    axs[0, 0].plot(x, soln[0, :], '-b', linewidth=3, label="linear")  # linear u
+    axs[0, 0].plot(x, soln[4, :], '--r', linewidth=3, label="nonlinear")  # nonlinear u
+    axs[0, 0].set_xlim([-L/2, L/2])
+    axs[0, 0].set_title("Transverse Displacements")
+    axs[0, 0].grid(True);
+    axs[0, 0].set_ylim([-0.005, 0.005])
+    axs[0, 0].legend(loc="best")
 
-    axs[1].plot(x, soln[1,:], '-b', linewidth=3, label="linear")  # linear v
-    axs[1].plot(x, soln[3, :], '--r', linewidth=3, label="nonlinear")  # nonlinear v
-    axs[1].set_title("Velocities")
-    axs[1].set_ylim([-1, 1])
-    axs[1].grid(True);
-    axs[1].legend(loc="best")
+    axs[1, 0].plot(x, soln[1, :], '-b', linewidth=3, label="linear")  # linear v
+    axs[1, 0].plot(x, soln[5, :], '--r', linewidth=3, label="nonlinear")  # nonlinear v
+    axs[1, 0].set_title("Transverse Velocities")
+    axs[1, 0].set_ylim([-1, 1])
+    axs[1, 0].grid(True);
+    axs[1, 0].legend(loc="best")
+
+    axs[0, 1].plot(x, soln[2, :], '-b', linewidth=3, label="linear")  # linear u (long)
+    axs[0, 1].plot(x, soln[6, :], '--r', linewidth=3, label="nonlinear")  # nonlinear u (long)
+    axs[0, 1].set_title("Longitudinal Displacements")
+    axs[0, 1].set_ylim([-0.005, 0.005])
+    axs[0, 1].grid(True);
+    axs[0, 1].legend(loc="best")
+
+    axs[1, 1].plot(x, soln[3, :], '-b', linewidth=3, label="linear")  # linear v (long)
+    axs[1, 1].plot(x, soln[7, :], '--r', linewidth=3, label="nonlinear")  # nonlinear v (long)
+    axs[1, 1].set_title("Longitudinal Velocities")
+    axs[1, 1].set_ylim([-1, 1])
+    axs[1, 1].grid(True);
+    axs[1, 1].legend(loc="best")
+
+    # hide inner tick labels
+    for ax in axs.flat:
+        ax.label_outer()
+
     plt.draw()
     plt.pause(0.01)
 
@@ -113,14 +139,14 @@ def plot_hovmoller(x, soln_save, parms):
     plt.savefig("hovmoller_plot_displacement.png")
 
 def output_info(parms):
-    cfl  = parms.c2*parms.dt/parms.dx
+    cfl  = max(parms.c2_l, parms.c2_t)*parms.dt/parms.dx
 
     print("Solution to the one-dimensional wave equations")
     print("==============================================")
     print("Parameters (space):   L = ", parms.L, " N = ", parms.N, " dx = ", parms.dx)
     print("Parameters (time):   tf = ", parms.tf, "  dt = ", parms.dt, " ts = ", parms.ts)
     print(" ")
-    print("Parameters (speed):     c2 = ", parms.c2)
+    print("Parameters (speed):   c2_t = ", parms.c2_t, " c2_l = ", parms.c2_l)
     print("Parameters (dispersion): k = ", parms.k)
     print('Parameters (cfl):      cfl = ', cfl)
     print(" ")
