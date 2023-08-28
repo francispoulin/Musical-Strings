@@ -54,15 +54,16 @@ movie_name = 'wave_eqn_movie.mp4'
 
 ### Input parameters
 L  = 0.631                                       # length of domain                
-N  = 90                                      # number of grid points
+N  = 200                                      # number of grid points
 dx = L/N                                      # grid spacing
 c2_t = 330                                    # transverse wave speed (squared)
 c2_l = 350                                    # longitudinal wave speed (squared)
 k  = 1.0                                      # dispersion parameter
 
-t0, tf  = 0, 1                               # initial time, final time
-dt, ts  = 0.00001, 0.00005                          # time steps soln and output
-tp      = dt*10                               # time step for plotting
+t0, tf  = 0, 1e-2                               # initial time, final time
+dt, ts  = 1e-6, 5e-4                          # time steps soln and output
+m = 100
+tp      = dt*m                               # time step for plotting
 
 ### Compute Parameters
 Nt  = int(tf/dt)                               # mumber of time steps
@@ -72,7 +73,7 @@ nsv = int(ts/dt)                               # mumber of time steps to save
 ### Store parameters in a class then output some info
 parms = parameters(N = N, L = L, dx = dx, \
                    dt = dt, tf = tf, ts = ts, Nt = Nt, npt = npt, nsv = nsv, skip = 5, \
-                   c2_t = c2_t, c2_l = c2_l, k = k, method = flux_wave_eqn)
+                   c2_t = c2_t, c2_l = c2_l, k = k, m = m, method = flux_wave_eqn)
 output_info(parms)
 
 ### Initial Conditions with plot: u1, h1, u3, h3

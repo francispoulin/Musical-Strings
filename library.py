@@ -8,7 +8,7 @@ import subprocess                      # needed for movie
 import sys
 
 class parameters:
-    def __init__(self, N, L, dx, dt, tf, ts, Nt, npt, nsv, skip, c2_t, c2_l, k, method):
+    def __init__(self, N, L, dx, dt, tf, ts, Nt, npt, nsv, skip, c2_t, c2_l, k, m, method):
         self.N  = N
         self.L  = L
         self.dx = dx
@@ -22,6 +22,7 @@ class parameters:
         self.c2_t = c2_t
         self.c2_l = c2_l
         self.k = k
+        self.m = m
         self.method = method
 
 def merge_to_mp4(frame_filenames, movie_name, fps=12):
@@ -70,6 +71,7 @@ def flux_wave_eqn(soln, parms):
 def plot_soln(x, soln, parms, fig, axs, movie, ii):
     L  = parms.L
     N  = parms.N
+    m = parms.m
     sk = parms.skip
 
     axs[0, 0].cla()
@@ -117,7 +119,7 @@ def plot_soln(x, soln, parms, fig, axs, movie, ii):
     plt.pause(0.01)
 
     if movie:
-        plt.savefig('frame_{0:04d}.png'.format(int(ii/10)), dpi=200)
+        plt.savefig('frame_{0:04d}.png'.format(int(ii/parms.m)), dpi=200)
 
 
 def plot_hovmoller(x, soln_save, parms):
