@@ -15,10 +15,11 @@
 #  2) after starting python3, use
 #  >>> import nonlinear_wave_eqn
 
-# soln contains the solution in the following order: uL, vL, wL, sL, uN, vN, wN, sN
+# soln contains the solution in the following order: uL, vL, wL, sL, uN, vN, wN, sN, uT, vT, wT, sT, pT, vpT
 # u = transverse displacement; v = transverse velocity
 # w = longitudinal displacement; s = longitudinal velocity
-# L = linear; N = nonlinear
+# p = varphi displacement; vp = varphi velocity (Timoshenko model)
+# L = linear; N = nonlinear; T = Timoshenko model
 
 # all the fields are defined on the cell edges x
 
@@ -27,13 +28,7 @@
 # w(0, t) = 0 = w(L, t)
 # v(0, t) = 0 = v(L, t)
 # s(0, t) = 0 = s(L, t)
-
-# 230609 TODO LIST:
-    # add dispersion into the eqn (kappa value) [DONE i think]
-    # change BCs so u=v=0 at edges [life is a struggle]
-    # add v into plot so superimposed with u (solid & dashed lines) [DONE]
-    # find realistic parameters [see reseaerch document]
-    # remove frame png's [DONE]
+# p(0, t) = 0 = p(L, t)
 
 ### import standard libraries
 import numpy as np                             # numerical library
@@ -53,17 +48,19 @@ movie = True                                   # switch to make an animation
 movie_name = 'wave_eqn_movie.mp4'
 
 ### Input parameters
-L  = 0.631                                       # length of domain                
-N  = 200                                      # number of grid points
-dx = L/N                                      # grid spacing
-c2_t = 330                                    # transverse wave speed (squared)
-c2_l = 350                                    # longitudinal wave speed (squared)
-k  = 1.0                                      # dispersion parameter
+L    = 0.961                                   # length of domain                
+N    = 200                                     # number of grid points
+dx   = L/N                                     # grid spacing
+c2_t = 1.13e5                                  # transverse wave speed (squared)
+c2_l = 2.55e7                                  # longitudinal wave speed (squared)
+k    = 0.95                                    # Timoshenko shear parameter
+C1   = 1.44e7                                  # A/I parameter
+C2   = 9.68e6                                  # Gk/rho parameter
 
-t0, tf  = 0, 1e-2                               # initial time, final time
-dt, ts  = 1e-6, 5e-4                          # time steps soln and output
-m = 100
-tp      = dt*m                               # time step for plotting
+t0, tf  = 0, 5e-6                              # initial time, final time
+dt, ts  = 1e-11, 5e-7                          # time steps soln and output
+m       = 100000                               # multiplication factor for tp and movie
+tp      = dt*m                                 # time step for plotting
 
 ### Compute Parameters
 Nt  = int(tf/dt)                               # mumber of time steps
@@ -72,24 +69,24 @@ nsv = int(ts/dt)                               # mumber of time steps to save
 
 ### Store parameters in a class then output some info
 parms = parameters(N = N, L = L, dx = dx, \
-                   dt = dt, tf = tf, ts = ts, Nt = Nt, npt = npt, nsv = nsv, skip = 5, \
-                   c2_t = c2_t, c2_l = c2_l, k = k, m = m, method = flux_wave_eqn)
+                   dt = dt, tf = tf, ts = ts, m = m, Nt = Nt, npt = npt, nsv = nsv, skip = 5, \
+                   c2_t = c2_t, c2_l = c2_l, k = k, C1 = C1, C2 = C2, method = flux_wave_eqn)
 output_info(parms)
 
-### Initial Conditions with plot: u1, h1, u3, h3
+### Initial Conditions with plot: uL, vL, wL, sL, uN, vN, wN, sN, uT, vT, wT, sT, pT, vpT
 x    = np.linspace(-L/2, L/2, N+1)          # define grids (staggered grid)
 # ICs: initial velocity
-#soln = np.vstack([0*x, np.exp(-(x**2)/(L/20)**2), \
-#                  0*x, np.exp(-(x**2)/(L/20)**2)])
 soln = np.vstack([0*x, 0.7*np.exp(-(x**2)/(L/20)**2), 0*x, 0.7*np.exp(-(x**2)/(L/20)**2), \
-                  0*x, 0.7*np.exp(-(x**2)/(L/20)**2), 0*x, 0.7*np.exp(-(x**2)/(L/20)**2),])
+                  0*x, 0.7*np.exp(-(x**2)/(L/20)**2), 0*x, 0.7*np.exp(-(x**2)/(L/20)**2), \
+                  0*x, 0.7*np.exp(-(x**2)/(L/20)**2), 0*x, 0.7*np.exp(-(x**2)/(L/20)**2), \
+                  0*x, 0*x ])
 
 ### Store data to plot later
-soln_save = np.zeros((8, N+1, round(tf/ts) + 1))
+soln_save = np.zeros((14, N+1, round(tf/ts) + 1))
 soln_save[:,:,0] = soln
 
 ### Start plotting snapshots
-fig, axs = plt.subplots(2, 2, sharex=True)      
+fig, axs = plt.subplots(2, 3, sharex=True)      
 plot_soln(x, soln, parms, fig, axs, movie, 0)
 
 ### Calculate the solution
