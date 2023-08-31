@@ -47,6 +47,9 @@ from library import calculate_soln             # integrate the PDE to find soln
 movie = True                                   # switch to make an animation
 movie_name = 'wave_eqn_movie.mp4'
 
+# save data
+outfile = "soln_data.npy"
+
 ### Input parameters
 L    = 0.961                                   # length of domain                
 N    = 50                                     # number of grid points
@@ -94,6 +97,9 @@ plot_soln(x, xs, soln, parms, fig, axs, movie, 0)
 soln_save = calculate_soln(x, xs, soln, soln_save, parms, fig, axs, movie)
 plt.savefig("final_displacement.png")
 plt.show()
+
+### Save the data into a file
+np.save(outfile, soln_save)
 
 ### Make animation
 if movie:
