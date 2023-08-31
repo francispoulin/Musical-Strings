@@ -49,7 +49,7 @@ movie_name = 'wave_eqn_movie.mp4'
 
 ### Input parameters
 L    = 0.961                                   # length of domain                
-N    = 200                                     # number of grid points
+N    = 50                                     # number of grid points
 dx   = L/N                                     # grid spacing
 c2_t = 1.13e5                                  # transverse wave speed (squared)
 c2_l = 2.55e7                                  # longitudinal wave speed (squared)
@@ -75,11 +75,12 @@ output_info(parms)
 
 ### Initial Conditions with plot: uL, vL, wL, sL, uN, vN, wN, sN, uT, vT, wT, sT, pT, vpT
 x    = np.linspace(-L/2, L/2, N+1)          # define grids (staggered grid)
+xs   = np.linspace(-L/2 + dx/2, L/2 - dx/2, N)     # staggered grid
 # ICs: initial velocity
 soln = np.vstack([0*x, 0.7*np.exp(-(x**2)/(L/20)**2), 0*x, 0.7*np.exp(-(x**2)/(L/20)**2), \
                   0*x, 0.7*np.exp(-(x**2)/(L/20)**2), 0*x, 0.7*np.exp(-(x**2)/(L/20)**2), \
                   0*x, 0.7*np.exp(-(x**2)/(L/20)**2), 0*x, 0.7*np.exp(-(x**2)/(L/20)**2), \
-                  0*x, 0*x ])
+                  np.hstack([0*xs, 0]), np.hstack([0*xs, 0]) ])
 
 ### Store data to plot later
 soln_save = np.zeros((14, N+1, round(tf/ts) + 1))
@@ -87,10 +88,10 @@ soln_save[:,:,0] = soln
 
 ### Start plotting snapshots
 fig, axs = plt.subplots(2, 3, sharex=True)      
-plot_soln(x, soln, parms, fig, axs, movie, 0)
+plot_soln(x, xs, soln, parms, fig, axs, movie, 0)
 
 ### Calculate the solution
-soln_save = calculate_soln(x, soln, soln_save, parms, fig, axs, movie)
+soln_save = calculate_soln(x, xs, soln, soln_save, parms, fig, axs, movie)
 plt.savefig("final_displacement.png")
 plt.show()
 

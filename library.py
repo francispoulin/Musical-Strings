@@ -60,12 +60,13 @@ def flux_wave_eqn(soln, parms):
     dudx_N = dfdx(soln[4, :], dx)
     dwdx_N = dfdx(soln[6, :], dx)
     dRdx_N = np.sqrt(np.square((1+dwdx_N)) + np.square((dudx_N)))
+
     dudx_T = dfdx(soln[8, :], dx)
     dwdx_T = dfdx(soln[10, :], dx)
     dRdx_T = np.sqrt(np.square((1+dwdx_T)) + np.square((dudx_T)))
-    dpdx_T = dfdx(soln[12, :], dx)
+    dpdx_T = np.hstack([0, dfdx(soln[12, :-1], dx), 0])
 
-    vec = soln[12, 1:] - dudx_T  # TODO: HELP WITH GRID
+    vec = soln[12, :-1] - dudx_T
     
     flux_vL = np.zeros(N+1)
     flux_sL = np.zeros(N+1)
@@ -81,13 +82,13 @@ def flux_wave_eqn(soln, parms):
     flux_sN[1:-1] = c2_l * dfdx(dwdx_N, dx) - (c2_l - c2_t) * dfdx(np.divide((1+dwdx_N), dRdx_N), dx)
     flux_vT[1:-1] = c2_l * dfdx(dudx_T, dx) - (c2_l - c2_t) * dfdx(np.divide(dudx_T, dRdx_T), dx) - C2 * dfdx(vec, dx)
     flux_sT[1:-1] = c2_l * dfdx(dwdx_T, dx) - (c2_l - c2_t) * dfdx(np.divide((1+dwdx_T), dRdx_T), dx)
-    flux_vpT[1:-1] = c2_l * dfdx(dpdx_T, dx) - C1 * C2 * vec[:-1]  # TODO: ONCE AGAIN, HELP WITH GRID
+    flux_vpT[:-1] = c2_l * dfdx(dpdx_T, dx) - C1 * C2 * vec
 
     flux = np.vstack([soln[1, :], flux_vL, soln[3, :], flux_sL, soln[5, :], flux_vN, soln[7, :], flux_sN, soln[9, :], flux_vT, soln[11, :], flux_sT, soln[13, :], flux_vpT])
               
     return flux
 
-def plot_soln(x, soln, parms, fig, axs, movie, ii):
+def plot_soln(x, xs, soln, parms, fig, axs, movie, ii):  # TODO
     L  = parms.L
     N  = parms.N
     m = parms.m
@@ -136,13 +137,13 @@ def plot_soln(x, soln, parms, fig, axs, movie, ii):
     axs[1, 1].grid(True);
     axs[1, 1].legend(loc="best")
 
-    axs[0, 2].plot(x, soln[12, :], '-.g', linewidth=3, label="Timoshenko")  # pT
+    axs[0, 2].plot(xs, soln[12, :-1], '-.g', linewidth=3, label="Timoshenko")  # pT
     axs[0, 2].set_title("Varphi Displacements")
     #axs[0, 2].set_ylim([-5e-6, 5e-6])
     axs[0, 2].grid(True);
     axs[0, 2].legend(loc="best")
 
-    axs[1, 2].plot(x, soln[13, :], '-.g', linewidth=3, label="Timoshenko")  # vpT
+    axs[1, 2].plot(xs, soln[13, :-1], '-.g', linewidth=3, label="Timoshenko")  # vpT
     axs[1, 2].set_title("Varphi Velocities")
     #axs[1, 2].set_ylim([-0.8, 0.8])
     axs[1, 2].grid(True);
@@ -199,7 +200,7 @@ def output_info(parms):
         print("Please try again but reduce dt so that CFL < -0.5")
         sys.exit('Stopping code!')
 
-def calculate_soln(x, soln, soln_save, parms, fig, axs, movie):
+def calculate_soln(x, xs, soln, soln_save, parms, fig, axs, movie):
 
     dt = parms.dt
     method = parms.method
@@ -218,7 +219,7 @@ def calculate_soln(x, soln, soln_save, parms, fig, axs, movie):
 
         if ii%parms.npt==0:
             print('Plot at t = %6.7f' % t)
-            plot_soln(x, soln, parms, fig, axs, movie, ii)
+            plot_soln(x, xs, soln, parms, fig, axs, movie, ii)
     
         if ii%parms.nsv==0:
             soln_save[:,:,count_save] = soln[:,:]
