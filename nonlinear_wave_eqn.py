@@ -99,7 +99,8 @@ plt.savefig("final_displacement.png")
 plt.show()
 
 ### Save the data into a file
-np.save(outfile, soln_save)
+with open(outfile, "wb") as f:
+    np.save(f, soln_save)
 
 ### Make animation
 if movie:
