@@ -39,21 +39,23 @@ def plot_time_instant(freq, Pxx, i):
 
 ###
 
-file = "C:\\Users\\flutt\\Downloads\\Piano recordings\\Piano F.wav"
-note = "F4"
+if __name__ == "__main__":
 
-# read file and generate the data
-Fs, aud = wavfile.read(file)
+    file = "C:\\Users\\flutt\\Downloads\\Piano recordings\\Piano F.wav"
+    note = "F4"
 
-# plot specgram manually
-fig, Pxx, freq, t, dB = plot_spectrogram(Fs, aud, note)
+    # read file and generate the data
+    Fs, aud = wavfile.read(file)
 
-# plot one time instant
-print(t[470:490])
-#for i in range(476, 490):
-#    fig = plot_time_instant(freq, dB, i)
+    # plot specgram manually
+    fig, Pxx, freq, t, dB = plot_spectrogram(Fs, aud, note)
 
-fig = plot_time_instant(freq, dB, 482)
+    # plot one time instant
+    print(t[470:490])
+    #for i in range(476, 490):
+    #    fig = plot_time_instant(freq, dB, i)
 
-# display plots
-plt.show()
+    fig = plot_time_instant(freq, dB, 482)
+
+    # display plots
+    plt.show()
