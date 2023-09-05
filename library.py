@@ -109,15 +109,15 @@ def plot_soln(x, xs, soln, parms, fig, axs, movie, ii):  # TODO
     axs[0, 0].plot(x, soln[8, :], '-.g', linewidth=3, label="Timoshenko")
     axs[0, 0].set_xlim([-L/2, L/2])
     axs[0, 0].set_title("Transverse Displacements")
+    axs[0, 0].set_ylim([-0.005, 0.005])
     axs[0, 0].grid(True);
-    axs[0, 0].set_ylim([-5e-6, 5e-6])
     axs[0, 0].legend(loc="best")
 
     axs[1, 0].plot(x, soln[1, :], '-b', linewidth=3, label="linear")  # linear v
     axs[1, 0].plot(x, soln[5, :], '--r', linewidth=3, label="nonlinear")  # nonlinear v
     axs[1, 0].plot(x, soln[9, :], '-.g', linewidth=3, label="Timoshenko")
     axs[1, 0].set_title("Transverse Velocities")
-    axs[1, 0].set_ylim([-0.8, 0.8])
+    axs[1, 0].set_ylim([-1.8, 1.8])
     axs[1, 0].grid(True);
     axs[1, 0].legend(loc="best")
 
@@ -125,7 +125,7 @@ def plot_soln(x, xs, soln, parms, fig, axs, movie, ii):  # TODO
     axs[0, 1].plot(x, soln[6, :], '--r', linewidth=3, label="nonlinear")  # nonlinear u (long)
     axs[0, 1].plot(x, soln[10, :], '-.g', linewidth=3, label="Timoshenko")
     axs[0, 1].set_title("Longitudinal Displacements")
-    axs[0, 1].set_ylim([-5e-6, 5e-6])
+    axs[0, 1].set_ylim([-9e-5, 9e-5])
     axs[0, 1].grid(True);
     axs[0, 1].legend(loc="best")
 
@@ -139,19 +139,19 @@ def plot_soln(x, xs, soln, parms, fig, axs, movie, ii):  # TODO
 
     axs[0, 2].plot(xs, soln[12, :-1], '-.g', linewidth=3, label="Timoshenko")  # pT
     axs[0, 2].set_title("Varphi Displacements")
-    #axs[0, 2].set_ylim([-5e-6, 5e-6])
+    #axs[0, 2].set_ylim([-5e-2, 5e-2])
     axs[0, 2].grid(True);
     axs[0, 2].legend(loc="best")
 
     axs[1, 2].plot(xs, soln[13, :-1], '-.g', linewidth=3, label="Timoshenko")  # vpT
     axs[1, 2].set_title("Varphi Velocities")
-    #axs[1, 2].set_ylim([-0.8, 0.8])
+    #axs[1, 2].set_ylim([-25, 25])
     axs[1, 2].grid(True);
     axs[1, 2].legend(loc="best")
 
     # hide inner tick labels
-    for ax in axs.flat:
-        ax.label_outer()
+    #for ax in axs.flat:
+    #    ax.label_outer()
 
     plt.draw()
     plt.pause(0.01)
@@ -169,13 +169,13 @@ def plot_hovmoller(x, soln_save, parms):
     fig.colorbar(hplot1, ax=axs[0], extend='max')
     axs[0].set_xlim([-parms.L/2, parms.L/2])
     axs[0].set_ylim([tts[0], tts[-1]])
-    axs[0].set_title('uL (displacement linear)')
+    axs[0].set_title('uL (transverse displacement linear)')
 
-    hplot2 = axs[1].pcolor(x, tts, np.transpose(soln_save[2,:,:]))
+    hplot2 = axs[1].pcolor(x, tts, np.transpose(soln_save[4,:,:]))
     fig.colorbar(hplot2, ax=axs[1], extend='max')
     axs[1].set_xlim([-parms.L/2, parms.L/2])
     axs[1].set_ylim([tts[0], tts[-1]])
-    axs[1].set_title('uN (displacement nonlinear)')
+    axs[1].set_title('uN (transverse displacement nonlinear)')
     plt.savefig("hovmoller_plot_displacement.png")
 
 def output_info(parms):
