@@ -52,7 +52,7 @@ outfile = "soln_data.npy"
 
 ### Input parameters
 L    = 0.961                                   # length of domain                
-N    = 50                                     # number of grid points
+N    = 50                                      # number of grid points
 dx   = L/N                                     # grid spacing
 c2_t = 1.13e5                                  # transverse wave speed (squared)
 c2_l = 2.55e7                                  # longitudinal wave speed (squared)
@@ -60,7 +60,7 @@ k    = 0.95                                    # Timoshenko shear parameter
 C1   = 1.44e7                                  # A/I parameter
 C2   = 9.68e6                                  # Gk/rho parameter
 
-t0, tf  = 0, 5e-6                              # initial time, final time
+t0, tf  = 0, 4e-3                              # initial time, final time
 dt, ts  = 1e-11, 5e-7                          # time steps soln and output
 m       = 100000                               # multiplication factor for tp and movie
 tp      = dt*m                                 # time step for plotting
@@ -80,9 +80,9 @@ output_info(parms)
 x    = np.linspace(-L/2, L/2, N+1)          # define grids (staggered grid)
 xs   = np.linspace(-L/2 + dx/2, L/2 - dx/2, N)     # staggered grid
 # ICs: initial velocity
-soln = np.vstack([0*x, 0.7*np.exp(-(x**2)/(L/20)**2), 0*x, 0.7*np.exp(-(x**2)/(L/20)**2), \
-                  0*x, 0.7*np.exp(-(x**2)/(L/20)**2), 0*x, 0.7*np.exp(-(x**2)/(L/20)**2), \
-                  0*x, 0.7*np.exp(-(x**2)/(L/20)**2), 0*x, 0.7*np.exp(-(x**2)/(L/20)**2), \
+soln = np.vstack([0*x, 1.5*np.exp(-(x**2)/(L/20)**2), 0*x, 0.5*np.exp(-(x**2)/(L/20)**2), \
+                  0*x, 1.5*np.exp(-(x**2)/(L/20)**2), 0*x, 0.5*np.exp(-(x**2)/(L/20)**2), \
+                  0*x, 1.5*np.exp(-(x**2)/(L/20)**2), 0*x, 0.5*np.exp(-(x**2)/(L/20)**2), \
                   np.hstack([0*xs, 0]), np.hstack([0*xs, 0]) ])
 
 ### Store data to plot later
@@ -90,7 +90,7 @@ soln_save = np.zeros((14, N+1, round(tf/ts) + 1))
 soln_save[:,:,0] = soln
 
 ### Start plotting snapshots
-fig, axs = plt.subplots(2, 3, sharex=True)      
+fig, axs = plt.subplots(2, 3, sharex=True, figsize=(9, 5))      
 plot_soln(x, xs, soln, parms, fig, axs, movie, 0)
 
 ### Calculate the solution
@@ -99,7 +99,8 @@ plt.savefig("final_displacement.png")
 plt.show()
 
 ### Save the data into a file
-np.save(outfile, soln_save)
+with open(outfile, "wb") as f:
+    np.save(f, soln_save)
 
 ### Make animation
 if movie:
