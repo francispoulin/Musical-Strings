@@ -84,6 +84,7 @@ def flux_wave_eqn(soln, parms):
     flux_sT[1:-1] = c2_l * dfdx(dwdx_T, dx) - (c2_l - c2_t) * dfdx(np.divide((1+dwdx_T), dRdx_T), dx)
     flux_vpT[:-1] = c2_l * dfdx(dpdx_T, dx) - C1 * C2 * vec
 
+
     flux = np.vstack([soln[1, :], flux_vL, soln[3, :], flux_sL, soln[5, :], flux_vN, soln[7, :], flux_sN, soln[9, :], flux_vT, soln[11, :], flux_sT, soln[13, :], flux_vpT])
               
     return flux
@@ -107,9 +108,9 @@ def plot_soln(x, xs, soln, parms, fig, axs, movie, ii):  # TODO
     axs[0, 0].plot(x, soln[0, :], '-b', linewidth=3, label="linear")  # linear u
     axs[0, 0].plot(x, soln[4, :], '--r', linewidth=3, label="nonlinear")  # nonlinear u
     axs[0, 0].plot(x, soln[8, :], '-.g', linewidth=3, label="Timoshenko")
-    axs[0, 0].set_xlim([-L/2, L/2])
+    axs[0, 0].set_xlim([0, L])
     axs[0, 0].set_title("Transverse Displacements")
-    axs[0, 0].set_ylim([-0.005, 0.005])
+    #axs[0, 0].set_ylim([-1.7, 1.7])
     axs[0, 0].grid(True);
     axs[0, 0].legend(loc="best")
 
@@ -117,7 +118,7 @@ def plot_soln(x, xs, soln, parms, fig, axs, movie, ii):  # TODO
     axs[1, 0].plot(x, soln[5, :], '--r', linewidth=3, label="nonlinear")  # nonlinear v
     axs[1, 0].plot(x, soln[9, :], '-.g', linewidth=3, label="Timoshenko")
     axs[1, 0].set_title("Transverse Velocities")
-    axs[1, 0].set_ylim([-1.8, 1.8])
+    #axs[1, 0].set_ylim([-1.8, 1.8])
     axs[1, 0].grid(True);
     axs[1, 0].legend(loc="best")
 
@@ -125,7 +126,7 @@ def plot_soln(x, xs, soln, parms, fig, axs, movie, ii):  # TODO
     axs[0, 1].plot(x, soln[6, :], '--r', linewidth=3, label="nonlinear")  # nonlinear u (long)
     axs[0, 1].plot(x, soln[10, :], '-.g', linewidth=3, label="Timoshenko")
     axs[0, 1].set_title("Longitudinal Displacements")
-    axs[0, 1].set_ylim([-9e-5, 9e-5])
+    #axs[0, 1].set_ylim([-9e-5, 9e-5])
     axs[0, 1].grid(True);
     axs[0, 1].legend(loc="best")
 
@@ -133,7 +134,7 @@ def plot_soln(x, xs, soln, parms, fig, axs, movie, ii):  # TODO
     axs[1, 1].plot(x, soln[7, :], '--r', linewidth=3, label="nonlinear")  # nonlinear v (long)
     axs[1, 1].plot(x, soln[11, :], '-.g', linewidth=3, label="Timoshenko") # timoshenko
     axs[1, 1].set_title("Longitudinal Velocities")
-    axs[1, 1].set_ylim([-0.8, 0.8])
+    #axs[1, 1].set_ylim([-0.8, 0.8])
     axs[1, 1].grid(True);
     axs[1, 1].legend(loc="best")
 
