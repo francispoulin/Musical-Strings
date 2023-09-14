@@ -91,7 +91,7 @@ soln_save = np.zeros((14, N+1, round(tf/ts) + 1))
 soln_save[:,:,0] = soln
 
 ### Start plotting snapshots
-fig, axs = plt.subplots(2, 3, sharex=True, figsize=(9, 5))      
+fig, axs = plt.subplots(2, 4, sharex=False, figsize=(12, 5))      
 plot_soln(x, xs, soln, parms, fig, axs, movie, 0)
 
 ### Calculate the solution

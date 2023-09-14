@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import glob
+from scipy import fftpack
 import numpy as np                     # Import Libraries
 import matplotlib.pyplot as plt
 import os                              # to delete the png files
@@ -92,15 +93,20 @@ def flux_wave_eqn(soln, parms):
 def plot_soln(x, xs, soln, parms, fig, axs, movie, ii):  # TODO
     L  = parms.L
     N  = parms.N
+    dx = parms.dx
+    c_t = np.sqrt(parms.c2_t)
+    c_l = np.sqrt(parms.c2_l)
     m = parms.m
     sk = parms.skip
 
     axs[0, 0].cla()
     axs[0, 1].cla()
     axs[0, 2].cla()
+    axs[0, 3].cla()
     axs[1, 0].cla()
     axs[1, 1].cla()
     axs[1, 2].cla()
+    axs[1, 3].cla()
 
     t = ii*parms.dt
     fig.suptitle('Displacements in Elastic Rod at t = %7.7f' % t)
@@ -149,6 +155,33 @@ def plot_soln(x, xs, soln, parms, fig, axs, movie, ii):  # TODO
     #axs[1, 2].set_ylim([-25, 25])
     axs[1, 2].grid(True);
     axs[1, 2].legend(loc="best")
+
+    # power spectrum plots
+    k_t = compute_k(N, dx, c_t)
+    fL = compute_fhat(soln[0, :], N)
+    fN = compute_fhat(soln[4, :], N)
+    fT = compute_fhat(soln[8, :], N)
+    axs[0, 3].plot(k_t, np.abs(fL), color="deeppink", marker=".", linestyle="-", label="linear")
+    axs[0, 3].plot(k_t, np.abs(fN), color="dodgerblue", marker=".", linestyle="--", label="nonlinear")
+    axs[0, 3].plot(k_t, np.abs(fT), color="goldenrod", marker=".", linestyle="-.", label="timoshenko")
+    axs[0, 3].set_xlabel("frequency (Hz)")
+    axs[0, 3].set_ylabel("f hat")
+    axs[0, 3].set_title(f"Transverse Spectrum")
+    axs[0, 3].grid(True)
+    axs[0, 3].legend()
+
+    k_l = compute_k(N, dx, c_l)
+    fL = compute_fhat(soln[2, :], N)
+    fN = compute_fhat(soln[6, :], N)
+    fT = compute_fhat(soln[10, :], N)
+    axs[1, 3].plot(k_l, np.abs(fL), color="deeppink", marker=".", linestyle="-", label="linear")
+    axs[1, 3].plot(k_l, np.abs(fN), color="dodgerblue", marker=".", linestyle="--", label="nonlinear")
+    axs[1, 3].plot(k_l, np.abs(fT), color="goldenrod", marker=".", linestyle="-.", label="timoshenko")
+    axs[1, 3].set_xlabel("frequency (Hz)")
+    axs[1, 3].set_ylabel("f hat")
+    axs[1, 3].set_title(f"Longitudinal Spectrum")
+    axs[1, 3].grid(True)
+    axs[1, 3].legend()
 
     # hide inner tick labels
     #for ax in axs.flat:
@@ -200,6 +233,20 @@ def output_info(parms):
         print("The CFL paramter is greater than one.")
         print("Please try again but reduce dt so that CFL < -0.5")
         sys.exit('Stopping code!')
+
+def compute_k(N, dx, c):
+    kodd = fftpack.fftfreq(2*N, d=dx)
+    freq = kodd*c
+    freqh = freq[0:N]
+
+    return freqh
+
+def compute_fhat(soln, N):
+    fodd = np.hstack([soln, 0, -np.flipud(soln[1:])])
+    fodd_hat = fftpack.fft(fodd)
+    fhat = fodd_hat[0:N]
+
+    return fhat
 
 def calculate_soln(x, xs, soln, soln_save, parms, fig, axs, movie):
 
