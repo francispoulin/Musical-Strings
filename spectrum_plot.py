@@ -97,12 +97,16 @@ if __name__ == "__main__":
 
     ### DATA FILE ###
     data = np.load("soln_data.npy")
+    spec_data = np.load("spec_data.npy")
+
+    #print(data.shape)
+    #print(spec_data.shape)
 
 
     ### PHYSICAL CONSTANTS ###
     # get time points -> maybe find a way to include it in parms?
     t0 = 0.0
-    tf = 2e-3
+    tf = 2e-5
     time = np.linspace(t0, tf, data.shape[2])
 
     # choose our point of interest
@@ -123,9 +127,23 @@ if __name__ == "__main__":
     fig2 = timeseries(time, data, point, "Longitudinal")
 
     # spectrum
-    spectrum_plot = plot_spectrum(data, "transverse", int(data.shape[2]/2), N, dx, c_t)
+    time_index = int(data.shape[2]/2)
+    spectrum_plot = plot_spectrum(data, "transverse", time_index, N, dx, c_t)
 
-    #plt.show()
+    #kodd = fftpack.fftfreq(2*N, d=dx)
+    #freq = kodd*c_t
+    #freqh = freq[0:N]
+
+    #fig = plt.figure()
+    #plt.plot(freqh, spec_data[0, :, int(spec_data.shape[2]/2)], color="deeppink", marker=".", linestyle="-", label="linear")
+    #plt.plot(freqh, spec_data[2, :, int(spec_data.shape[2]/2)], color="dodgerblue", marker=".", linestyle="--", label="nonlinear")
+    #plt.plot(freqh, spec_data[4, :, int(spec_data.shape[2]/2)], color="goldenrod", marker=".", linestyle="-.", label="timoshenko")
+    #plt.xlabel("k*c values (Hz)")
+    #plt.ylabel("f hat values")
+    #plt.title(f"Spectrum plot of transverse waves at time {int(spec_data.shape[2]/2)}")
+    #plt.legend()
+
+    plt.show()
 
 
     ### SOUND ###
@@ -157,4 +175,4 @@ if __name__ == "__main__":
 
     # ok and then... i think i should just be able to write it as a wav file?
     filename = f"maybe_piano.wav"
-    write(filename, samplerate, uL_data.astype(np.int16))
+    #write(filename, samplerate, uL_data.astype(np.int16))

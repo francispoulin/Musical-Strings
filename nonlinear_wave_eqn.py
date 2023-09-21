@@ -36,6 +36,8 @@ import matplotlib.pyplot as plt                # plotting library
 
 ### import personal libraries
 from library import parameters                 # class to store parameters
+from library import fhat_all
+from library import compute_k
 from library import merge_to_mp4               # to make animation
 from library import flux_wave_eqn              # flux for the PDEs to integrate
 from library import plot_soln                  # plot snapshots
@@ -49,6 +51,7 @@ movie_name = 'wave_eqn_movie.mp4'
 
 # save data
 outfile = "soln_data.npy"
+outfile_spec = "spec_data.npy"
 
 ### Input parameters
 L    = 0.961                                   # length of domain                
@@ -60,9 +63,9 @@ k    = 0.95                                    # Timoshenko shear parameter
 C1   = 1.44e7                                  # A/I parameter
 C2   = 9.68e6                                  # Gk/rho parameter
 
-t0, tf  = 0, 2e-3                              # initial time, final time
+t0, tf  = 0, 2e-5                              # initial time, final time
 dt, ts  = 1e-11, 5e-7                          # time steps soln and output
-m       = 100000                               # multiplication factor for tp and movie
+m       = 1e5                                  # multiplication factor for tp and movie
 tp      = dt*m                                 # time step for plotting
 
 ### Compute Parameters
@@ -70,10 +73,13 @@ Nt  = int(tf/dt)                               # mumber of time steps
 npt = int(tp/dt)                               # mumber of time steps to plot
 nsv = int(ts/dt)                               # mumber of time steps to save
 
+kt = compute_k(N, dx, np.sqrt(c2_t))
+kl = compute_k(N, dx, np.sqrt(c2_l))
+
 ### Store parameters in a class then output some info
 parms = parameters(N = N, L = L, dx = dx, \
                    dt = dt, tf = tf, ts = ts, m = m, Nt = Nt, npt = npt, nsv = nsv, skip = 5, \
-                   c2_t = c2_t, c2_l = c2_l, k = k, C1 = C1, C2 = C2, method = flux_wave_eqn)
+                   c2_t = c2_t, c2_l = c2_l, k = k, C1 = C1, C2 = C2, kt = kt, kl = kl, method = flux_wave_eqn)
 output_info(parms)
 
 ### Initial Conditions with plot: uL, vL, wL, sL, uN, vN, wN, sN, uT, vT, wT, sT, pT, vpT
@@ -90,18 +96,25 @@ soln = np.vstack([0*x, 15.0*np.exp(-((x-L/2)**2)/(L/20)**2), 0*x, 0.0*np.exp(-((
 soln_save = np.zeros((14, N+1, round(tf/ts) + 1))
 soln_save[:,:,0] = soln
 
+spec_save = np.zeros((6, N, int((tf - t0) / tp) + 1))  # array to save spectrum values
+spec = fhat_all(soln, N)
+spec_save[:, :, 0] = spec
+
 ### Start plotting snapshots
 fig, axs = plt.subplots(2, 4, sharex=False, figsize=(12, 5))      
-plot_soln(x, xs, soln, parms, fig, axs, movie, 0)
+plot_soln(x, xs, soln, spec, parms, fig, axs, movie, 0)
 
 ### Calculate the solution
-soln_save = calculate_soln(x, xs, soln, soln_save, parms, fig, axs, movie)
+soln_save, spec_save = calculate_soln(x, xs, soln, soln_save, spec_save, parms, fig, axs, movie)
 plt.savefig("final_displacement.png")
 plt.show()
 
 ### Save the data into a file
 with open(outfile, "wb") as f:
     np.save(f, soln_save)
+
+with open(outfile_spec, "wb") as f:
+    np.save(f, spec_save)
 
 ### Make animation
 if movie:

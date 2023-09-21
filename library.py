@@ -9,7 +9,7 @@ import subprocess                      # needed for movie
 import sys
 
 class parameters:
-    def __init__(self, N, L, dx, dt, tf, ts, m, Nt, npt, nsv, skip, c2_t, c2_l, k, C1, C2, method):
+    def __init__(self, N, L, dx, dt, tf, ts, m, Nt, npt, nsv, skip, c2_t, c2_l, k, C1, C2, kt, kl, method):
         self.N  = N
         self.L  = L
         self.dx = dx
@@ -26,6 +26,8 @@ class parameters:
         self.k = k
         self.C1 = C1
         self.C2 = C2
+        self.kt = kt
+        self.kl = kl
         self.method = method
 
 def merge_to_mp4(frame_filenames, movie_name, fps=12):
@@ -90,12 +92,10 @@ def flux_wave_eqn(soln, parms):
               
     return flux
 
-def plot_soln(x, xs, soln, parms, fig, axs, movie, ii):  # TODO
+def plot_soln(x, xs, soln, spec, parms, fig, axs, movie, ii):  # TODO
     L  = parms.L
-    N  = parms.N
-    dx = parms.dx
-    c_t = np.sqrt(parms.c2_t)
-    c_l = np.sqrt(parms.c2_l)
+    kt = parms.kt
+    kl = parms.kl
 
     axs[0, 0].cla()
     axs[0, 1].cla()
@@ -155,26 +155,18 @@ def plot_soln(x, xs, soln, parms, fig, axs, movie, ii):  # TODO
     axs[1, 2].legend(loc="best")
 
     # power spectrum plots
-    k_t = compute_k(N, dx, c_t)
-    fL = compute_fhat(soln[0, :], N)
-    fN = compute_fhat(soln[4, :], N)
-    fT = compute_fhat(soln[8, :], N)
-    axs[0, 3].plot(k_t, np.abs(fL), color="deeppink", marker=".", linestyle="-", label="linear")
-    axs[0, 3].plot(k_t, np.abs(fN), color="dodgerblue", marker=".", linestyle="--", label="nonlinear")
-    axs[0, 3].plot(k_t, np.abs(fT), color="goldenrod", marker=".", linestyle="-.", label="timoshenko")
+    axs[0, 3].plot(kt, spec[0, :], color="deeppink", marker=".", linestyle="-", label="linear")
+    axs[0, 3].plot(kt, spec[2, :], color="dodgerblue", marker=".", linestyle="--", label="nonlinear")
+    axs[0, 3].plot(kt, spec[4, :], color="goldenrod", marker=".", linestyle="-.", label="timoshenko")
     axs[0, 3].set_xlabel("frequency (Hz)")
     axs[0, 3].set_ylabel("f hat")
     axs[0, 3].set_title(f"Transverse Spectrum")
     axs[0, 3].grid(True)
     axs[0, 3].legend()
 
-    k_l = compute_k(N, dx, c_l)
-    fL = compute_fhat(soln[2, :], N)
-    fN = compute_fhat(soln[6, :], N)
-    fT = compute_fhat(soln[10, :], N)
-    axs[1, 3].plot(k_l, np.abs(fL), color="deeppink", marker=".", linestyle="-", label="linear")
-    axs[1, 3].plot(k_l, np.abs(fN), color="dodgerblue", marker=".", linestyle="--", label="nonlinear")
-    axs[1, 3].plot(k_l, np.abs(fT), color="goldenrod", marker=".", linestyle="-.", label="timoshenko")
+    axs[1, 3].plot(kl, spec[1, :], color="deeppink", marker=".", linestyle="-", label="linear")
+    axs[1, 3].plot(kl, spec[3, :], color="dodgerblue", marker=".", linestyle="--", label="nonlinear")
+    axs[1, 3].plot(kl, spec[5, :], color="goldenrod", marker=".", linestyle="-.", label="timoshenko")
     axs[1, 3].set_xlabel("frequency (Hz)")
     axs[1, 3].set_ylabel("f hat")
     axs[1, 3].set_title(f"Longitudinal Spectrum")
@@ -246,7 +238,24 @@ def compute_fhat(soln, N):
 
     return fhat
 
-def calculate_soln(x, xs, soln, soln_save, parms, fig, axs, movie):
+def fhat_all(soln_array, N):
+    """ i say all but really only the displacements """
+    fhat = np.zeros((6, N))
+
+    # transverse
+    fhat[0, :] = np.abs(compute_fhat(soln_array[0, :], N))
+    fhat[2, :] = np.abs(compute_fhat(soln_array[4, :], N))
+    fhat[4, :] = np.abs(compute_fhat(soln_array[8, :], N))
+
+    # longitudinal
+    fhat[1, :] = np.abs(compute_fhat(soln_array[2, :], N))
+    fhat[3, :] = np.abs(compute_fhat(soln_array[6, :], N))
+    fhat[5, :] = np.abs(compute_fhat(soln_array[10, :], N))
+
+    return fhat
+    
+
+def calculate_soln(x, xs, soln, soln_save, spec_save, parms, fig, axs, movie):
 
     dt = parms.dt
     method = parms.method
@@ -258,18 +267,24 @@ def calculate_soln(x, xs, soln, soln_save, parms, fig, axs, movie):
     soln = soln + 0.5*dt*(3*NLn - NLnm)
 
     count_save = 1
+    count_spec = 1
     for ii in range(3,parms.Nt+3):                       # AdamsBashforth3 step
         t    = ii*dt   
         NL   = method(soln, parms);
         soln = soln + dt/12*(23*NL - 16*NLn + 5*NLnm)
 
         if ii%parms.npt==0:
+            # compute spectrum
+            spec = fhat_all(soln, parms.N)
+            spec_save[:, :, count_spec] = spec[:, :]
+            count_spec += 1
+
             print('Plot at t = %6.7f' % t)
-            plot_soln(x, xs, soln, parms, fig, axs, movie, ii)
+            plot_soln(x, xs, soln, spec, parms, fig, axs, movie, ii)
     
         if ii%parms.nsv==0:
             soln_save[:,:,count_save] = soln[:,:]
             count_save += 1
 
         NLnm, NLn = NLn, NL                        # Reset fluxes
-    return soln_save
+    return soln_save, spec_save
