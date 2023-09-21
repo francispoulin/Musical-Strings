@@ -96,8 +96,6 @@ def plot_soln(x, xs, soln, parms, fig, axs, movie, ii):  # TODO
     dx = parms.dx
     c_t = np.sqrt(parms.c2_t)
     c_l = np.sqrt(parms.c2_l)
-    m = parms.m
-    sk = parms.skip
 
     axs[0, 0].cla()
     axs[0, 1].cla()

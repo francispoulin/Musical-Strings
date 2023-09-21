@@ -60,7 +60,7 @@ k    = 0.95                                    # Timoshenko shear parameter
 C1   = 1.44e7                                  # A/I parameter
 C2   = 9.68e6                                  # Gk/rho parameter
 
-t0, tf  = 0, 1e-4                              # initial time, final time
+t0, tf  = 0, 2e-3                              # initial time, final time
 dt, ts  = 1e-11, 5e-7                          # time steps soln and output
 m       = 100000                               # multiplication factor for tp and movie
 tp      = dt*m                                 # time step for plotting
@@ -81,9 +81,9 @@ x    = np.linspace(0, L, N+1)          # define grids (staggered grid)
 xs   = np.linspace(0 + dx/2, L - dx/2, N)     # staggered grid
 # ICs: initial velocity
 # 0.5 -> 0
-soln = np.vstack([0*x, 1.5*np.exp(-((x-L/2)**2)/(L/20)**2), 0*x, 0.0*np.exp(-((x-L/2)**2)/(L/20)**2), \
-                  0*x, 1.5*np.exp(-((x-L/2)**2)/(L/20)**2), 0*x, 0.0*np.exp(-((x-L/2)**2)/(L/20)**2), \
-                  0*x, 1.5*np.exp(-((x-L/2)**2)/(L/20)**2), 0*x, 0.0*np.exp(-((x-L/2)**2)/(L/20)**2), \
+soln = np.vstack([0*x, 15.0*np.exp(-((x-L/2)**2)/(L/20)**2), 0*x, 0.0*np.exp(-((x-L/2)**2)/(L/20)**2), \
+                  0*x, 15.0*np.exp(-((x-L/2)**2)/(L/20)**2), 0*x, 0.0*np.exp(-((x-L/2)**2)/(L/20)**2), \
+                  0*x, 15.0*np.exp(-((x-L/2)**2)/(L/20)**2), 0*x, 0.0*np.exp(-((x-L/2)**2)/(L/20)**2), \
                   np.hstack([0*xs, 0]), np.hstack([0*xs, 0]) ])
 
 ### Store data to plot later

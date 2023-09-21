@@ -21,7 +21,14 @@ file should be a .npy file with the following indices:
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import fftpack
+from scipy.io.wavfile import write
 import sys
+
+def splice_data_time(data, var, point):
+    """ gets the values of the data for a specific variable
+    and at one point for all the time values
+    """
+    return data[var, point, :]
 
 def timeseries(time, data, point, type):
     """ type must be either 'Transverse' or 'Longitudinal'"""
@@ -33,9 +40,9 @@ def timeseries(time, data, point, type):
         print("Type is not 'Transverse' or 'Longitudinal'. Exiting.")
         sys.exit()
     fig = plt.figure()
-    plt.plot(time, data[index[0], point, :], "b-", label="linear")
-    plt.plot(time, data[index[1], point, :], "r--", label="nonlinear")
-    plt.plot(time, data[index[2], point, :], "g-.", label="timoshenko")
+    plt.plot(time, splice_data_time(data, index[0], point), "b-", label="linear")
+    plt.plot(time, splice_data_time(data, index[1], point), "r--", label="nonlinear")
+    plt.plot(time, splice_data_time(data, index[2], point), "g-.", label="timoshenko")
     plt.legend()
     plt.title(f"{type} displacement over time")
     return fig
@@ -86,73 +93,68 @@ def plot_spectrum(data, type, time, N, dx, c):
 
 ###
 
-data = np.load("soln_data.npy")
+if __name__ == "__main__":
 
-# get time points -> maybe find a way to include it in parms?
-t0 = 0.0
-tf = 1e-4
-time = np.linspace(t0, tf, data.shape[2])
-
-# timeseries
-fig1 = timeseries(time, data, 25, "Transverse")
-fig2 = timeseries(time, data, 25, "Longitudinal")
-
-#plt.show()
-
-# for uL
-L    = 0.961                
-N    = 50
-dx   = L/N
-c_t = np.sqrt(1.13e5)
-c_l = np.sqrt(2.55e7)
-
-# think abt integrating this into nonlinear_wave_eqn.py
-# to plot all of them at the same time (2x4 or 2x5)
-
-# maybe use a different dx?
-# https://stackoverflow.com/questions/9456037/scipy-numpy-fft-frequency-analysis
-
-#x    = np.linspace(0, L, N)
-#xodd = np.linspace(0, 2*L-dx, 2*N)
-
-#f_L = data[0, :, int(data.shape[2]-1)]
-#fodd = np.hstack([f_L, 0, -np.flipud(f_L[1:])])
-#fodd_hat = fftpack.fft(fodd)
-#f_hath_L = fodd_hat[0:N]
-
-#f_hath_L = compute_fhat(data, 0, int(data.shape[2]-1), N)
-#f_hath_N = compute_fhat(data, 4, int(data.shape[2]-1), N)
-#f_hath_T = compute_fhat(data, 8, int(data.shape[2]-1), N)
-
-#f_N = data[4, :, int(data.shape[2]-1)]
-#fodd = np.hstack([f_N, 0, -np.flipud(f_N[1:])])
-#fodd_hat = fftpack.fft(fodd)
-#f_hath_N = fodd_hat[0:N]
-
-#f_T = data[8, :, int(data.shape[2]-1)]
-#fodd = np.hstack([f_T, 0, -np.flipud(f_T[1:])])
-#fodd_hat = fftpack.fft(fodd)
-#f_hath_T = fodd_hat[0:N]
-
-#kodd = fftpack.fftfreq(2*N, d=dx)
-#freq = kodd*c_t
-#freqh = freq[0:N]
-
-#freqh = compute_k(N, dx, c_t)
-
-#fig = plt.figure()
-#plt.plot(freqh, np.abs(f_hath_L), color="deeppink", marker=".", linestyle="-", label="linear")
-#plt.plot(freqh, np.abs(f_hath_N), color="dodgerblue", marker=".", linestyle="--", label="nonlinear")
-#plt.plot(freqh, np.abs(f_hath_T), color="goldenrod", marker=".", linestyle="-.", label="timoshenko")
-#plt.xlabel("k*c values (Hz)")
-#plt.ylabel("f hat values")
-#plt.title(f"Spectrum plot of transverse waves at time {time[int(data.shape[2]/2)]}")
-#plt.legend()
-#plt.show()
-
-spectrum_plot = plot_spectrum(data, "transverse", int(data.shape[2]/2), N, dx, c_t)
-
-plt.show()
+    ### DATA FILE ###
+    data = np.load("soln_data.npy")
 
 
-xs   = np.linspace(0 + dx/2, L - dx/2, N)
+    ### PHYSICAL CONSTANTS ###
+    # get time points -> maybe find a way to include it in parms?
+    t0 = 0.0
+    tf = 2e-3
+    time = np.linspace(t0, tf, data.shape[2])
+
+    # choose our point of interest
+    point = 25  # index 25 is the middle
+
+    # for uL
+    L    = 0.961                
+    N    = 50
+    dx   = L/N
+    c_t = np.sqrt(1.13e5)
+    c_l = np.sqrt(2.55e7)
+
+
+    ### PLOTS ###
+
+    # timeseries
+    fig1 = timeseries(time, data, point, "Transverse")
+    fig2 = timeseries(time, data, point, "Longitudinal")
+
+    # spectrum
+    spectrum_plot = plot_spectrum(data, "transverse", int(data.shape[2]/2), N, dx, c_t)
+
+    #plt.show()
+
+
+    ### SOUND ###
+    # for the wav file, we need a sample rate
+    # sample rate is in samples/sec units
+    duration = tf - t0
+    # we have data.shape[2] samples in duration seconds
+    # so samplerate should be...
+    samplerate = int(data.shape[2] / duration)  # number of samples per second?
+    print(f"samplerate: {samplerate}")  # 2000500, in piano project it's 44100 so that's a HUGE difference...
+
+    # let's say i want to artificially extend the sound so it's 1s long
+    # then...
+    samplerate = int(data.shape[2] / 1.0)
+
+
+    # ok so for piano project what i did was
+    # got all the freq & amplitude values (in dB)
+    # then generated all the sin waves as amp*sin(2*pi*freq * t)
+    # concatenated them all for each time interval and stitched them together basically
+    # but i should be able to get what the wave looks like already at a certain point
+    # from the timeseries plot
+    # we choose the point on the string above
+
+    # let's start with uL
+    uL_data = splice_data_time(data, 0, point) * 1e8
+
+    print(max(uL_data))
+
+    # ok and then... i think i should just be able to write it as a wav file?
+    filename = f"maybe_piano.wav"
+    write(filename, samplerate, uL_data.astype(np.int16))
