@@ -33,6 +33,7 @@
 ### import standard libraries
 import numpy as np                             # numerical library
 import matplotlib.pyplot as plt                # plotting library
+from pathlib import Path
 
 ### import personal libraries
 from library import parameters                 # class to store parameters
@@ -47,11 +48,11 @@ from library import calculate_soln             # integrate the PDE to find soln
 
 # options to make the movie
 movie = True                                   # switch to make an animation
-movie_name = 'wave_eqn_movie.mp4'
+movie_name = 'output_files/wave_eqn_movie.mp4'
 
 # save data
-outfile = "soln_data.npy"
-outfile_spec = "spec_data.npy"
+outfile = "output_files/soln_data.npy"
+outfile_spec = "output_files/spec_data.npy"
 
 ### Input parameters
 L    = 0.961                                   # length of domain                
@@ -63,7 +64,7 @@ k    = 0.95                                    # Timoshenko shear parameter
 C1   = 1.44e7                                  # A/I parameter
 C2   = 9.68e6                                  # Gk/rho parameter
 
-t0, tf  = 0, 2e-5                              # initial time, final time
+t0, tf  = 0, 1e-5                              # initial time, final time
 dt, ts  = 1e-11, 5e-7                          # time steps soln and output
 m       = 1e5                                  # multiplication factor for tp and movie
 tp      = dt*m                                 # time step for plotting
@@ -75,6 +76,10 @@ nsv = int(ts/dt)                               # mumber of time steps to save
 
 kt = compute_k(N, dx, np.sqrt(c2_t))
 kl = compute_k(N, dx, np.sqrt(c2_l))
+
+### Make output directories
+Path("figures/").mkdir(parents=True, exist_ok=True)
+Path("output_files/").mkdir(parents=True, exist_ok=True)
 
 ### Store parameters in a class then output some info
 parms = parameters(N = N, L = L, dx = dx, \
@@ -106,7 +111,7 @@ plot_soln(x, xs, soln, spec, parms, fig, axs, movie, 0)
 
 ### Calculate the solution
 soln_save, spec_save = calculate_soln(x, xs, soln, soln_save, spec_save, parms, fig, axs, movie)
-plt.savefig("final_displacement.png")
+plt.savefig("figures/final_displacement.png")
 plt.show()
 
 ### Save the data into a file
@@ -118,7 +123,7 @@ with open(outfile_spec, "wb") as f:
 
 ### Make animation
 if movie:
-    merge_to_mp4('frame_%04d.png', movie_name)
+    merge_to_mp4('figures/frame_%04d.png', movie_name)
 
 ## Hovmoller plots of the solution and save
 plot_hovmoller(x, soln_save, parms)

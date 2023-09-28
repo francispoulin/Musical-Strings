@@ -32,13 +32,13 @@ class parameters:
 
 def merge_to_mp4(frame_filenames, movie_name, fps=12):
 
-    f_log = open("ffmpeg.log", "w")
-    f_err = open("ffmpeg.err", "w")
+    f_log = open("output_files/ffmpeg.log", "w")
+    f_err = open("output_files/ffmpeg.err", "w")
     cmd = ['ffmpeg', '-framerate', str(fps), '-i', frame_filenames, '-y', 
             '-q', '1', '-threads', '0', '-pix_fmt', 'yuv420p', movie_name]
     subprocess.call(cmd, stdout=f_log, stderr=f_err)
     # remove the frame PNGs
-    for f in glob.glob("frame_*.png"):
+    for f in glob.glob("figures/frame_*.png"):
         os.remove(f)
     f_log.close()
     f_err.close()
@@ -181,7 +181,7 @@ def plot_soln(x, xs, soln, spec, parms, fig, axs, movie, ii):  # TODO
     plt.pause(0.01)
 
     if movie:
-        plt.savefig('frame_{0:04d}.png'.format(int(ii/parms.m)), dpi=200)
+        plt.savefig('figures/frame_{0:04d}.png'.format(int(ii/parms.m)), dpi=200)
 
 
 def plot_hovmoller(x, soln_save, parms):
@@ -200,7 +200,7 @@ def plot_hovmoller(x, soln_save, parms):
     axs[1].set_xlim([-parms.L/2, parms.L/2])
     axs[1].set_ylim([tts[0], tts[-1]])
     axs[1].set_title('uN (transverse displacement nonlinear)')
-    plt.savefig("hovmoller_plot_displacement.png")
+    plt.savefig("figures/hovmoller_plot_displacement.png")
 
 def output_info(parms):
     cfl  = max(parms.c2_l, parms.c2_t)*parms.dt/parms.dx
