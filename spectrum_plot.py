@@ -30,22 +30,35 @@ def splice_data_time(data, var, point):
     """
     return data[var, point, :]
 
-def timeseries(time, data, point, type):
-    """ type must be either 'Transverse' or 'Longitudinal'"""
-    if type == "Transverse":
-        index = [0, 4, 8]
-    elif type == "Longitudinal":
-        index = [2, 6, 10]
+def timeseries(time, data, point, ax=None):
+
+    index = {}
+    index[0] = [0, 4, 8]
+    index[1] = [2, 6, 10]
+
+    if ax is None:
+        ret = True
+        fig, ax = plt.subplots(2, 1, sharex=True)
+        plt.suptitle(f"Displacement vs. Time at Point {point}")
     else:
-        print("Type is not 'Transverse' or 'Longitudinal'. Exiting.")
-        sys.exit()
-    fig = plt.figure()
-    plt.plot(time, splice_data_time(data, index[0], point), "b-", label="linear")
-    plt.plot(time, splice_data_time(data, index[1], point), "r--", label="nonlinear")
-    plt.plot(time, splice_data_time(data, index[2], point), "g-.", label="timoshenko")
-    plt.legend()
-    plt.title(f"{type} displacement over time")
-    return fig
+        ret = False
+        plt.suptitle("Displacement vs. Time")
+
+    ax[0].set_title("Transverse Displacement")
+    ax[1].set_title("Longitudinal Displacement")
+    
+    for i in [0, 1]:
+        ax[i].plot(time, splice_data_time(data, index[i][0], point), "b-", label="linear")
+        ax[i].plot(time, splice_data_time(data, index[i][1], point), "r--", label="nonlinear")
+        ax[i].plot(time, splice_data_time(data, index[i][2], point), "g-.", label="timoshenko")
+        ax[i].set_ylabel("Displacement (m)")
+
+    plt.xlabel("Time (s)")
+
+    if ret:
+        ax[0].legend()
+        ax[1].legend()
+        return fig
 
 def compute_k(N, dx, c):
     kodd = fftpack.fftfreq(2*N, d=dx)
@@ -96,8 +109,8 @@ def plot_spectrum(data, type, time, N, dx, c):
 if __name__ == "__main__":
 
     ### DATA FILE ###
-    data = np.load("soln_data.npy")
-    spec_data = np.load("spec_data.npy")
+    data = np.load("output_files/soln_data_002.npy")
+    #spec_data = np.load("spec_data.npy")
 
     #print(data.shape)
     #print(spec_data.shape)
@@ -106,11 +119,8 @@ if __name__ == "__main__":
     ### PHYSICAL CONSTANTS ###
     # get time points -> maybe find a way to include it in parms?
     t0 = 0.0
-    tf = 2e-5
+    tf = 2e-3
     time = np.linspace(t0, tf, data.shape[2])
-
-    # choose our point of interest
-    point = 25  # index 25 is the middle
 
     # for uL
     L    = 0.961                
@@ -123,56 +133,21 @@ if __name__ == "__main__":
     ### PLOTS ###
 
     # timeseries
-    fig1 = timeseries(time, data, point, "Transverse")
-    fig2 = timeseries(time, data, point, "Longitudinal")
+    fig = timeseries(time, data, 25)
+    plt.savefig("figures/timeseries.png")
+
+    # timeseries but all points of the string on one plot
+    fig, ax = plt.subplots(2, 1, sharex=True)
+    for point in np.arange(N):
+        fig = timeseries(time, data, point, ax)
+
+    plt.savefig("figures/timeseries_all.png")
+
+    plt.show()
 
     # spectrum
     time_index = int(data.shape[2]/2)
     spectrum_plot = plot_spectrum(data, "transverse", time_index, N, dx, c_t)
 
-    #kodd = fftpack.fftfreq(2*N, d=dx)
-    #freq = kodd*c_t
-    #freqh = freq[0:N]
-
-    #fig = plt.figure()
-    #plt.plot(freqh, spec_data[0, :, int(spec_data.shape[2]/2)], color="deeppink", marker=".", linestyle="-", label="linear")
-    #plt.plot(freqh, spec_data[2, :, int(spec_data.shape[2]/2)], color="dodgerblue", marker=".", linestyle="--", label="nonlinear")
-    #plt.plot(freqh, spec_data[4, :, int(spec_data.shape[2]/2)], color="goldenrod", marker=".", linestyle="-.", label="timoshenko")
-    #plt.xlabel("k*c values (Hz)")
-    #plt.ylabel("f hat values")
-    #plt.title(f"Spectrum plot of transverse waves at time {int(spec_data.shape[2]/2)}")
-    #plt.legend()
-
-    plt.show()
 
 
-    ### SOUND ###
-    # for the wav file, we need a sample rate
-    # sample rate is in samples/sec units
-    duration = tf - t0
-    # we have data.shape[2] samples in duration seconds
-    # so samplerate should be...
-    samplerate = int(data.shape[2] / duration)  # number of samples per second?
-    print(f"samplerate: {samplerate}")  # 2000500, in piano project it's 44100 so that's a HUGE difference...
-
-    # let's say i want to artificially extend the sound so it's 1s long
-    # then...
-    samplerate = int(data.shape[2] / 1.0)
-
-
-    # ok so for piano project what i did was
-    # got all the freq & amplitude values (in dB)
-    # then generated all the sin waves as amp*sin(2*pi*freq * t)
-    # concatenated them all for each time interval and stitched them together basically
-    # but i should be able to get what the wave looks like already at a certain point
-    # from the timeseries plot
-    # we choose the point on the string above
-
-    # let's start with uL
-    uL_data = splice_data_time(data, 0, point) * 1e8
-
-    print(max(uL_data))
-
-    # ok and then... i think i should just be able to write it as a wav file?
-    filename = f"maybe_piano.wav"
-    #write(filename, samplerate, uL_data.astype(np.int16))
