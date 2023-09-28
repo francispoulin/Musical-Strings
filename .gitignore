@@ -1,0 +1,12 @@
+# files from VScode
+__pycache__/*
+.venv/*
+
+# output files
+audio_files/*
+figures/*
+output_files/*
+
+# test python files
+dwt_test.py
+sample_fft.py
