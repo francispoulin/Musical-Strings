@@ -1,7 +1,9 @@
+#!/usr/bin/env python
+
+""" script to generate an audio file from the output of nonlinear_wave_eqn.py or linear_wave_eqn.py """
+
 import numpy as np
 from scipy.io import wavfile
-import sys
-import pywt
 
 def splice_data_time(data, var, point):
     """ gets the values of the data for a specific variable
@@ -15,7 +17,6 @@ if __name__ == "__main__":
     data = np.load("output_files/linear_soln_data.npy")
 
     ### PHYSICAL CONSTANTS ###
-    # get time points -> maybe find a way to include it in parms?
     t0 = 0.0
     tf = 0.1
     time = np.linspace(t0, tf, data.shape[2])
@@ -34,16 +35,16 @@ if __name__ == "__main__":
     # for the wav file, we need a sample rate
     # sample rate is in samples/sec units
     duration = tf - t0
-    # we have data.shape[2] samples in duration seconds
-    # so samplerate should be...
-    samplerate = int(data.shape[2] / duration)  # number of samples per second?
+    samplerate = int(data.shape[2] / duration)
 
     # let's start with uL
     uL_data = splice_data_time(data, 0, point) * 1e7
 
-    # TODO: need to set up a plot -> y max should be abt 30k
+    # NOTE: for future tests, it is good to PLOT uL_data or whatever you're saving
+    # the max value should be ~30k
+    # if it is too low then the sound will be inaudible, and if it is too high it will be static
 
-    # ok and then... i think i should just be able to write it as a wav file?
+    # save to wav file
     filename = f"audio_files/linear_piano.wav"
     wavfile.write(filename, samplerate, uL_data.astype(np.int16))
 

@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+""" library functions for linear_wave_eqn.py 
+NOTE that they are not the most efficient or cleanest because it was made in a bit of a rush
+some variables are unneeded since there is only one wave equation
+"""
+
 import glob
 from scipy import fftpack
 import numpy as np                     # Import Libraries

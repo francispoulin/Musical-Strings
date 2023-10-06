@@ -68,7 +68,7 @@ parms = lib.parameters(N = N, L = L, dx = dx, \
                    c2_t = c2_t, kt = kt, method = lib.flux_wave_eqn)
 lib.output_info(parms)
 
-### Initial Conditions with plot: uL, vL, wL, sL, uN, vN, wN, sN, uT, vT, wT, sT, pT, vpT
+### Initial Conditions with plot: uL, vL
 x    = np.linspace(0, L, N+1)          # define grids (staggered grid)
 xs   = np.linspace(0 + dx/2, L - dx/2, N)     # staggered grid
 # ICs: initial velocity
@@ -83,8 +83,7 @@ spec_save = np.zeros((2, N, round((tf - t0) / tp) + 1))  # array to save spectru
 spec = lib.fhat_all(soln, N)
 spec_save[:, :, 0] = spec
 
-### Start plotting snapshots
-#fig, axs = plt.subplots(2, 2, sharex=False, figsize=(12, 5))      
+### Start plotting snapshots    
 fig = plt.figure(constrained_layout=True)
 axs = fig.subplot_mosaic([["TopLeft", "Right"], ["BottomLeft", "Right"]])
 lib.plot_soln(x, xs, soln, spec, parms, fig, axs, movie, 0)

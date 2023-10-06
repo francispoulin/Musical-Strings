@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+""" library functions for nonlinear_wave_eqn.py """
+
 import glob
 from scipy import fftpack
 import numpy as np                     # Import Libraries
@@ -31,6 +33,7 @@ class parameters:
         self.method = method
 
 def merge_to_mp4(frame_filenames, movie_name, fps=12):
+    """ creates mp4 of solution """
 
     f_log = open("output_files/ffmpeg.log", "w")
     f_err = open("output_files/ffmpeg.err", "w")
@@ -47,10 +50,10 @@ def dfdx(f,dx):                         # A difference function (positive direct
     return (f[1:] - f[0:-1])/dx
   
 def flux_wave_eqn(soln, parms):
+    """ computes RHS of PDEs; see nonlinear_wave_eqn.py for variable definitions """
     dx = parms.dx           
     c2_t = parms.c2_t
     c2_l = parms.c2_l
-    k = parms.k
     C1 = parms.C1
     C2 = parms.C2
     N = parms.N
@@ -58,12 +61,12 @@ def flux_wave_eqn(soln, parms):
     #uL, vL, wL, sL, uN, vN, wN, sN, uT, vT, wT, sT, pT, vpT
     # 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13
 
+    # first time derivative
     dudx_L = dfdx(soln[0, :], dx)
     dwdx_L = dfdx(soln[2, :], dx)
     dudx_N = dfdx(soln[4, :], dx)
     dwdx_N = dfdx(soln[6, :], dx)
     dRdx_N = np.sqrt(np.square((1+dwdx_N)) + np.square((dudx_N)))
-
     dudx_T = dfdx(soln[8, :], dx)
     dwdx_T = dfdx(soln[10, :], dx)
     dRdx_T = np.sqrt(np.square((1+dwdx_T)) + np.square((dudx_T)))
@@ -79,6 +82,7 @@ def flux_wave_eqn(soln, parms):
     flux_sT = np.zeros(N+1)
     flux_vpT = np.zeros(N+1)
 
+    # second time derivative
     flux_vL[1:-1] = c2_t * dfdx(dudx_L, dx) 
     flux_sL[1:-1] = c2_l * dfdx(dwdx_L, dx) 
     flux_vN[1:-1] = c2_l * dfdx(dudx_N, dx) - (c2_l - c2_t) * dfdx(np.divide(dudx_N, dRdx_N), dx)
@@ -92,7 +96,8 @@ def flux_wave_eqn(soln, parms):
               
     return flux
 
-def plot_soln(x, xs, soln, spec, parms, fig, axs, movie, ii):  # TODO
+def plot_soln(x, xs, soln, spec, parms, fig, axs, movie, ii):
+    """ plots displacement and spectrum of a single time instant """
     L  = parms.L
     kt = parms.kt
     kl = parms.kl
@@ -185,6 +190,7 @@ def plot_soln(x, xs, soln, spec, parms, fig, axs, movie, ii):  # TODO
 
 
 def plot_hovmoller(x, soln_save, parms):
+    """ plots hovmoller plot for uL and uN"""
     nsave = round(parms.tf/parms.ts) + 1
     fig, axs = plt.subplots(1, 2, sharey=True)     # Hovmoller plots of displacements
     fig.suptitle("Hovmoller plots of wave eqns")
@@ -203,6 +209,7 @@ def plot_hovmoller(x, soln_save, parms):
     plt.savefig("figures/hovmoller_plot_displacement.png")
 
 def output_info(parms):
+    """ prints physical parameters """
     cfl  = max(parms.c2_l, parms.c2_t)*parms.dt/parms.dx
 
     print("Solution to the one-dimensional wave equations")
@@ -225,6 +232,7 @@ def output_info(parms):
         sys.exit('Stopping code!')
 
 def compute_k(N, dx, c):
+    """ computes frequency values for FFT """
     kodd = fftpack.fftfreq(2*N, d=dx)
     freq = kodd*c
     freqh = freq[0:N]
@@ -232,6 +240,7 @@ def compute_k(N, dx, c):
     return freqh
 
 def compute_fhat(soln, N):
+    """ performs FFT """
     fodd = np.hstack([soln, 0, -np.flipud(soln[1:])])
     fodd_hat = fftpack.fft(fodd)
     fhat = fodd_hat[0:N]
@@ -239,7 +248,7 @@ def compute_fhat(soln, N):
     return fhat
 
 def fhat_all(soln_array, N):
-    """ i say all but really only the displacements """
+    """ performs FFT on the displacements """
     fhat = np.zeros((6, N))
 
     # transverse
@@ -256,6 +265,7 @@ def fhat_all(soln_array, N):
     
 
 def calculate_soln(x, xs, soln, soln_save, spec_save, parms, fig, axs, movie):
+    """ solves wave equations """
 
     dt = parms.dt
     method = parms.method

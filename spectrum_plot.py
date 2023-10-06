@@ -15,9 +15,6 @@ file should be a .npy file with the following indices:
     L = linear; N = nonlinear; T = Timoshenko model
 """
 
-# it would be nice if there was a config file or smth so that we could get the parms class in this file too
-# maybe smth simple woould be easy to make?
-
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
@@ -33,6 +30,9 @@ def splice_data_time(data, var, point):
     return data[var, point, :]
 
 def timeseries(time, data, point, ax=None):
+    """ plots timeseries for transverse waves (top) and long. waves (bottom) at a specific point
+    point: index at which to take the data 
+    """
 
     index = {}
     index[0] = [0, 4, 8]
@@ -63,6 +63,7 @@ def timeseries(time, data, point, ax=None):
         return fig
 
 def compute_k(N, dx, c):
+    """ computes frequency values for FFT """
     kodd = fftpack.fftfreq(2*N, d=dx)
     freq = kodd*c
     freqh = freq[0:N]
@@ -81,6 +82,11 @@ def compute_fhat(data, var, time, N):
     return fhat
 
 def plot_spectrum(data, type, time, N, dx, c):
+    """ plots the spectrum of either trans. or long. displacement at a specific time
+    time: index to pull the time from
+    type: "transverse" or "longitudinal"
+    c: wave speed (for w=ck relationship)
+    """
     k = compute_k(N, dx, c)
     
     if type == "transverse":
@@ -113,9 +119,6 @@ if __name__ == "__main__":
     ### DATA FILE ###
     data = np.load("output_files/linear_soln_data.npy")
     spec_data = np.load("output_files/linear_spec_data.npy")
-
-    #print(data.shape)
-    #print(spec_data.shape)
 
 
     ### PHYSICAL CONSTANTS ###
@@ -156,83 +159,68 @@ if __name__ == "__main__":
 
     plt.show()
 
+    sys.exit()
 
-
-
-
-
-
-
-
-
-
+    
+    # nonlinear plots (output of nonlinear_wave_eqn.py)
 
     # timeseries
-    #fig = timeseries(time, data, 25)
-    #plt.savefig("figures/timeseries.png")
+    fig = timeseries(time, data, 25)
+    plt.savefig("figures/timeseries.png")
 
     # timeseries but all points of the string on one plot
-    #fig, ax = plt.subplots(2, 1, sharex=True)
-    #for point in np.arange(N):
-    #    fig = timeseries(time, data, point, ax)
+    fig, ax = plt.subplots(2, 1, sharex=True)
+    for point in np.arange(N):
+        fig = timeseries(time, data, point, ax)
 
-    #plt.savefig("figures/timeseries_all.png")
+    plt.savefig("figures/timeseries_all.png")
 
-    #plt.show()
+    plt.show()
 
     # spectrum
-    #time_index = int(data.shape[2]/2)
-    #spectrum_plot = plot_spectrum(data, "transverse", time_index, N, dx, c_t)
+    time_index = int(data.shape[2]/2)
+    spectrum_plot = plot_spectrum(data, "transverse", time_index, N, dx, c_t)
 
     # now i want to make a spectrogram but of the timeseries
-    # like in audacity
     # x axis: time
     # y axis: frequency
     # color: amplitude
     # fhat = amplitude, that's spec_data
     # spec_data[var, point, time]
-    #uL_spec = spec_data[0, :, :]
-    #uN_spec = spec_data[2, :, :]
-    #uT_spec = spec_data[4, :, :]
-    #sL_spec = spec_data[1, :, :]
-    #sN_spec = spec_data[3, :, :]
-    #sT_spec = spec_data[5, :, :]
+    uL_spec = spec_data[0, :, :]
+    uN_spec = spec_data[2, :, :]
+    uT_spec = spec_data[4, :, :]
+    sL_spec = spec_data[1, :, :]
+    sN_spec = spec_data[3, :, :]
+    sT_spec = spec_data[5, :, :]
 
-    #print(uT_spec.shape)
-    #print(sT_spec.shape)
+    kt = compute_k(N, dx, c_t)
+    kl = compute_k(N, dx, c_l)
 
-    #kt = compute_k(N, dx, c_t)
-    #kl = compute_k(N, dx, c_l)
-
-    #print(kt.shape)
-    #print(kl.shape)
-
-    # i guess we actually want... 6 subplots (this data can't be altogether bc of colour)
-    #fig, ax = plt.subplots(3, 2)
-    #cmap = cm.get_cmap("PiYG_r")
-    #normalizer = Normalize(0, np.max(spec_data))
-    #im = cm.ScalarMappable(norm=normalizer, cmap=cmap)
-    #plt.suptitle("Spectrum Timeseries")
+    # 6 subplots (this data can't be altogether bc of colour)
+    fig, ax = plt.subplots(3, 2)
+    cmap = cm.get_cmap("PiYG_r")
+    normalizer = Normalize(0, np.max(spec_data))
+    im = cm.ScalarMappable(norm=normalizer, cmap=cmap)
+    plt.suptitle("Spectrum Timeseries")
 
     # plot our data
-    #ax[0, 0].pcolormesh(spec_time, kt, uL_spec, cmap=cmap, norm=normalizer, shading="nearest")
-    #ax[0, 0].set_title("Trans. Linear")
-    #ax[1, 0].pcolormesh(spec_time, kt, uN_spec, cmap=cmap, norm=normalizer, shading="nearest")
-    #ax[1, 0].set_title("Trans. Nonlinear")
-    #ax[2, 0].pcolormesh(spec_time, kt, uT_spec, cmap=cmap, norm=normalizer, shading="nearest")
-    #ax[2, 0].set_title("Trans. Timoshenko")
+    ax[0, 0].pcolormesh(spec_time, kt, uL_spec, cmap=cmap, norm=normalizer, shading="nearest")
+    ax[0, 0].set_title("Trans. Linear")
+    ax[1, 0].pcolormesh(spec_time, kt, uN_spec, cmap=cmap, norm=normalizer, shading="nearest")
+    ax[1, 0].set_title("Trans. Nonlinear")
+    ax[2, 0].pcolormesh(spec_time, kt, uT_spec, cmap=cmap, norm=normalizer, shading="nearest")
+    ax[2, 0].set_title("Trans. Timoshenko")
 
-    #ax[0, 1].pcolormesh(spec_time, kl, sL_spec, cmap=cmap, norm=normalizer, shading="nearest")
-    #ax[0, 1].set_title("Long. Linear")
-    #ax[1, 1].pcolormesh(spec_time, kl, sN_spec, cmap=cmap, norm=normalizer, shading="nearest")
-    #ax[1, 1].set_title("Long. Nonlinear")
-    #ax[2, 1].pcolormesh(spec_time, kl, sT_spec, cmap=cmap, norm=normalizer, shading="nearest")
-    #ax[2, 1].set_title("Long. Timoshenko")
+    ax[0, 1].pcolormesh(spec_time, kl, sL_spec, cmap=cmap, norm=normalizer, shading="nearest")
+    ax[0, 1].set_title("Long. Linear")
+    ax[1, 1].pcolormesh(spec_time, kl, sN_spec, cmap=cmap, norm=normalizer, shading="nearest")
+    ax[1, 1].set_title("Long. Nonlinear")
+    ax[2, 1].pcolormesh(spec_time, kl, sT_spec, cmap=cmap, norm=normalizer, shading="nearest")
+    ax[2, 1].set_title("Long. Timoshenko")
 
-    #fig.colorbar(im, ax=ax.ravel().tolist())
+    fig.colorbar(im, ax=ax.ravel().tolist())
 
-    #plt.show()
-
-
+    plt.show()
 
 
