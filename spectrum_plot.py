@@ -20,6 +20,8 @@ file should be a .npy file with the following indices:
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+from matplotlib.colors import Normalize
 from scipy import fftpack
 from scipy.io.wavfile import write
 import sys
@@ -109,8 +111,8 @@ def plot_spectrum(data, type, time, N, dx, c):
 if __name__ == "__main__":
 
     ### DATA FILE ###
-    data = np.load("output_files/soln_data_002.npy")
-    #spec_data = np.load("spec_data.npy")
+    data = np.load("output_files/linear_soln_data.npy")
+    spec_data = np.load("output_files/linear_spec_data.npy")
 
     #print(data.shape)
     #print(spec_data.shape)
@@ -119,12 +121,13 @@ if __name__ == "__main__":
     ### PHYSICAL CONSTANTS ###
     # get time points -> maybe find a way to include it in parms?
     t0 = 0.0
-    tf = 2e-3
+    tf = 0.1
     time = np.linspace(t0, tf, data.shape[2])
+    spec_time = np.linspace(t0, tf, spec_data.shape[2])
 
     # for uL
     L    = 0.961                
-    N    = 50
+    N    = 25
     dx   = L/N
     c_t = np.sqrt(1.13e5)
     c_l = np.sqrt(2.55e7)
@@ -132,22 +135,104 @@ if __name__ == "__main__":
 
     ### PLOTS ###
 
+    # linear plots
+
     # timeseries
-    fig = timeseries(time, data, 25)
-    plt.savefig("figures/timeseries.png")
-
-    # timeseries but all points of the string on one plot
-    fig, ax = plt.subplots(2, 1, sharex=True)
+    fig = plt.figure()
+    plt.title("Displacement vs. time for linear wave eqn. on string")
+    plt.xlabel("Time (s)")
+    plt.ylabel("Displacement (m)")
     for point in np.arange(N):
-        fig = timeseries(time, data, point, ax)
+        plt.plot(time, splice_data_time(data, 0, point))
 
-    plt.savefig("figures/timeseries_all.png")
+    # spectrum timeseries
+    k = compute_k(N, dx, c_t)
+    fig = plt.figure()
+    plt.pcolormesh(spec_time, k, spec_data[0, :, :], shading="nearest")
+    plt.colorbar(label="Amplitude")
+    plt.title("Spectrum Timeseries for linear wave eqn. on string")
+    plt.xlabel("Time (s)")
+    plt.ylabel("Frequency (Hz)")
 
     plt.show()
 
+
+
+
+
+
+
+
+
+
+
+
+    # timeseries
+    #fig = timeseries(time, data, 25)
+    #plt.savefig("figures/timeseries.png")
+
+    # timeseries but all points of the string on one plot
+    #fig, ax = plt.subplots(2, 1, sharex=True)
+    #for point in np.arange(N):
+    #    fig = timeseries(time, data, point, ax)
+
+    #plt.savefig("figures/timeseries_all.png")
+
+    #plt.show()
+
     # spectrum
-    time_index = int(data.shape[2]/2)
-    spectrum_plot = plot_spectrum(data, "transverse", time_index, N, dx, c_t)
+    #time_index = int(data.shape[2]/2)
+    #spectrum_plot = plot_spectrum(data, "transverse", time_index, N, dx, c_t)
+
+    # now i want to make a spectrogram but of the timeseries
+    # like in audacity
+    # x axis: time
+    # y axis: frequency
+    # color: amplitude
+    # fhat = amplitude, that's spec_data
+    # spec_data[var, point, time]
+    #uL_spec = spec_data[0, :, :]
+    #uN_spec = spec_data[2, :, :]
+    #uT_spec = spec_data[4, :, :]
+    #sL_spec = spec_data[1, :, :]
+    #sN_spec = spec_data[3, :, :]
+    #sT_spec = spec_data[5, :, :]
+
+    #print(uT_spec.shape)
+    #print(sT_spec.shape)
+
+    #kt = compute_k(N, dx, c_t)
+    #kl = compute_k(N, dx, c_l)
+
+    #print(kt.shape)
+    #print(kl.shape)
+
+    # i guess we actually want... 6 subplots (this data can't be altogether bc of colour)
+    #fig, ax = plt.subplots(3, 2)
+    #cmap = cm.get_cmap("PiYG_r")
+    #normalizer = Normalize(0, np.max(spec_data))
+    #im = cm.ScalarMappable(norm=normalizer, cmap=cmap)
+    #plt.suptitle("Spectrum Timeseries")
+
+    # plot our data
+    #ax[0, 0].pcolormesh(spec_time, kt, uL_spec, cmap=cmap, norm=normalizer, shading="nearest")
+    #ax[0, 0].set_title("Trans. Linear")
+    #ax[1, 0].pcolormesh(spec_time, kt, uN_spec, cmap=cmap, norm=normalizer, shading="nearest")
+    #ax[1, 0].set_title("Trans. Nonlinear")
+    #ax[2, 0].pcolormesh(spec_time, kt, uT_spec, cmap=cmap, norm=normalizer, shading="nearest")
+    #ax[2, 0].set_title("Trans. Timoshenko")
+
+    #ax[0, 1].pcolormesh(spec_time, kl, sL_spec, cmap=cmap, norm=normalizer, shading="nearest")
+    #ax[0, 1].set_title("Long. Linear")
+    #ax[1, 1].pcolormesh(spec_time, kl, sN_spec, cmap=cmap, norm=normalizer, shading="nearest")
+    #ax[1, 1].set_title("Long. Nonlinear")
+    #ax[2, 1].pcolormesh(spec_time, kl, sT_spec, cmap=cmap, norm=normalizer, shading="nearest")
+    #ax[2, 1].set_title("Long. Timoshenko")
+
+    #fig.colorbar(im, ax=ax.ravel().tolist())
+
+    #plt.show()
+
 
 
 
