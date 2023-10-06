@@ -16,3 +16,4 @@ REMAINING TODO ITEMS:
 - dispersion may help explain how the piano notes start and end (not all at once and fade out)
 - pianos actually have 3 strings per note (right now it computes for a single string)
 - efficiency: nonlinear_wave_eqn takes 6 hours on my (Sarah's) PC to compute 0.002s of sound
+- inharmonicity: nonlinear wave eqn with Timoshenko model may account for inharmonicity of piano harmonics
